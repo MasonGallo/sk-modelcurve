@@ -3,11 +3,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import collections
 
+
 def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
-                       train_sizes=np.linspace(.1,1.0,5), n_jobs=1,
-                       train_axis='n_examples', estimator_titles=None):
-    # TODO: clean up parameters and descriptions
-    """Create a learning curve to help us determine if we are overfitting or
+                        train_sizes=np.linspace(.1, 1.0, 5),
+                        train_axis='n_examples', estimator_titles=None,
+                        n_jobs=1):
+    """
+    Create a learning curve to help us determine if we are overfitting or
     underfitting. This is a wrapper over sklearn's excellent learning_curve
     function that adds useful capabilities like multiple estimators and
     automatically creates a plot, hopefully reducing boilerplate code. Returns
@@ -29,6 +31,9 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
        Target relative to X for classification or regression;
        None for unsupervised learning.
        
+    ylim: tuple, shape (ymin, ymax), optional
+          Defines min and max y-values plotted
+
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -62,10 +67,18 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
         the same learning curve. This should always be specified when using 
         multiple estimators on the same curve; otherwise, the plot will be hard
         to read. (default: None)
+
+    n_jobs: integer, optional
+            Number of jobs to run in parallel. (default: 1)
+
+    Returns
+    -------
+    plt: matplotlib.pyplot object for further editing by user. Don't forget to
+         use plt.show() or %matplotlib inline if necessary.
     """
     # TODO: test cases / error checking
     plt.figure()
-    
+
     if ylim is not None:
         plt.ylim(*ylim)
 
@@ -76,7 +89,7 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
         plt.xlabel('Percent of training examples used')
     if scoring is not None:
         plt.ylabel(scoring)
-    
+
     # if multiple estimators passed
     if isinstance(estimator, (collections.Sequence, np.ndarray)):
         if not isinstance(estimator_titles, (collections.Sequence, np.ndarray)):
@@ -84,7 +97,7 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
             specify names for each of the estimators with estimator_titles')
         for ind, est in enumerate(estimator):
             train_sizes, train_scores, test_scores = learning_curve(
-                est, X, y, cv=cv, n_jobs=n_jobs, scoring=scoring, 
+                est, X, y, cv=cv, n_jobs=n_jobs, scoring=scoring,
                 train_sizes=train_sizes)
             # account for percentage train size
             # this is dirty but works
@@ -92,8 +105,8 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
                 train_sizes = per_examples
             # convert regression scoring to positive to make easier to present
             if scoring in ['mean_absolute_error', 'mean_squared_error',
-             'median_absolute_error']:
-                 train_scores, test_scores = train_scores * -1.0, test_scores * -1.0
+                           'median_absolute_error']:
+                train_scores, test_scores = train_scores * -1.0, test_scores * -1.0
             train_scores_mean = np.mean(train_scores, axis=1)
             train_scores_std = np.std(train_scores, axis=1)
             test_scores_mean = np.mean(test_scores, axis=1)
@@ -102,24 +115,24 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
                              train_scores_mean + train_scores_std, alpha=0.1)
             plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
                              test_scores_mean + test_scores_std, alpha=0.1)
-            plt.plot(train_sizes, train_scores_mean, 'o-', 
+            plt.plot(train_sizes, train_scores_mean, 'o-',
                      label=estimator_titles[ind] + " Training score")
             plt.plot(train_sizes, test_scores_mean, 'o-',
                      label=estimator_titles[ind] + " Cross-validation score")
-            
+
     # if only 1 estimator
     else:
         train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=cv, n_jobs=n_jobs, scoring=scoring, 
-        train_sizes=train_sizes)
+            estimator, X, y, cv=cv, n_jobs=n_jobs, scoring=scoring,
+            train_sizes=train_sizes)
         # account for percentage train size
         # this is dirty but works
         if train_axis == 'per_examples':
             train_sizes = per_examples
         # convert regression scoring to positive to make easier to present
         if scoring in ['mean_absolute_error', 'mean_squared_error',
-         'median_absolute_error']:
-             train_scores, test_scores = train_scores * -1.0, test_scores * -1.0
+                       'median_absolute_error']:
+            train_scores, test_scores = train_scores * -1.0, test_scores * -1.0
         train_scores_mean = np.mean(train_scores, axis=1)
         train_scores_std = np.std(train_scores, axis=1)
         test_scores_mean = np.mean(test_scores, axis=1)
