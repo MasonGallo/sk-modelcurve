@@ -1,10 +1,11 @@
 from sklearn.learning_curve import learning_curve, validation_curve
 import matplotlib.pyplot as plt
 import numpy as np
+import collections
 
 def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
                        train_sizes=np.linspace(.1,1.0,5), n_jobs=1,
-                       train_axis='n_examples'):
+                       train_axis='n_examples', estimator_titles=None):
     # TODO: clean up parameters and descriptions
     """Create a learning curve to help us determine if we are overfitting or
     underfitting. This is a wrapper over sklearn's excellent learning_curve
@@ -14,8 +15,11 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
     
     Parameters
     ----------
-    estimator: sklearn estimator object type that implements "fit"
-    and "predict", as expected from sklearn
+    estimator: sklearn estimator object type that implements "fit" and "predict"
+               as expected from sklearn, or array-like of estimator objects
+               Use an array-like if you want to pass multiple estimators to the
+               same plot. If passing multiple estimators, scoring must be
+               specified.
     
     X: array-like, shape (n_samples, n_features)
        Training vector, where n_samples is the number of samples and
@@ -51,6 +55,13 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
     
     train_axis: string, either 'n_examples' or 'per_examples'
         Indicates what should be used on the x-axis of the returned plot.
+    
+    estimator_titles: array_like shape (n_estimators)
+        Indicates the title for each estimator to be used in plotting and added
+        to the legend. This is useful to distinguish between multiple models on
+        the same learning curve. This should always be specified when using 
+        multiple estimators on the same curve; otherwise, the plot will be hard
+        to read. (default: None)
     """
     # TODO: test cases / error checking
     plt.figure()
@@ -63,32 +74,65 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
     elif train_axis == 'per_examples':
         per_examples = np.copy(train_sizes)
         plt.xlabel('Percent of training examples used')
-    
-    # TODO: if scoring regression, should fix the axes to make clearer
     if scoring is not None:
         plt.ylabel(scoring)
     
-    # curve plotting
-    train_sizes, train_scores, test_scores = learning_curve(
+    # if multiple estimators passed
+    if isinstance(estimator, (collections.Sequence, np.ndarray)):
+        if not isinstance(estimator_titles, (collections.Sequence, np.ndarray)):
+            raise TypeError('When giving an array of estimators,you must\
+            specify names for each of the estimators with estimator_titles')
+        for ind, est in enumerate(estimator):
+            train_sizes, train_scores, test_scores = learning_curve(
+                est, X, y, cv=cv, n_jobs=n_jobs, scoring=scoring, 
+                train_sizes=train_sizes)
+            # account for percentage train size
+            # this is dirty but works
+            if train_axis == 'per_examples':
+                train_sizes = per_examples
+            # convert regression scoring to positive to make easier to present
+            if scoring in ['mean_absolute_error', 'mean_squared_error',
+             'median_absolute_error']:
+                 train_scores, test_scores = train_scores * -1.0, test_scores * -1.0
+            train_scores_mean = np.mean(train_scores, axis=1)
+            train_scores_std = np.std(train_scores, axis=1)
+            test_scores_mean = np.mean(test_scores, axis=1)
+            test_scores_std = np.std(test_scores, axis=1)
+            plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                             train_scores_mean + train_scores_std, alpha=0.1)
+            plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                             test_scores_mean + test_scores_std, alpha=0.1)
+            plt.plot(train_sizes, train_scores_mean, 'o-', 
+                     label=estimator_titles[ind] + " Training score")
+            plt.plot(train_sizes, test_scores_mean, 'o-',
+                     label=estimator_titles[ind] + " Cross-validation score")
+            
+    # if only 1 estimator
+    else:
+        train_sizes, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=cv, n_jobs=n_jobs, scoring=scoring, 
         train_sizes=train_sizes)
-    # account for percentage train size
-    # this is dirty but works
-    if train_axis == 'per_examples':
-        train_sizes = per_examples
-    train_scores_mean = np.mean(train_scores, axis=1)
-    train_scores_std = np.std(train_scores, axis=1)
-    test_scores_mean = np.mean(test_scores, axis=1)
-    test_scores_std = np.std(test_scores, axis=1)
-    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
-                     train_scores_mean + train_scores_std, alpha=0.1,
-                     color="r")
-    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
-                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
-             label="Training score")
-    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
-             label="Cross-validation score")
+        # account for percentage train size
+        # this is dirty but works
+        if train_axis == 'per_examples':
+            train_sizes = per_examples
+        # convert regression scoring to positive to make easier to present
+        if scoring in ['mean_absolute_error', 'mean_squared_error',
+         'median_absolute_error']:
+             train_scores, test_scores = train_scores * -1.0, test_scores * -1.0
+        train_scores_mean = np.mean(train_scores, axis=1)
+        train_scores_std = np.std(train_scores, axis=1)
+        test_scores_mean = np.mean(test_scores, axis=1)
+        test_scores_std = np.std(test_scores, axis=1)
+        plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                         train_scores_mean + train_scores_std, alpha=0.1,
+                         color="r")
+        plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                         test_scores_mean + test_scores_std, alpha=0.1, color="g")
+        plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
+                 label="Training score")
+        plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
+                 label="Cross-validation score")
     # add grid and legend
     plt.grid()
     plt.legend(loc="best")
