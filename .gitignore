@@ -63,3 +63,6 @@ target/
 
 # OSX Stuff
 .DS_Store
+
+# PyPI configs
+*.pypirc
