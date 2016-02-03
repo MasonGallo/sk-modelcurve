@@ -1,7 +1,53 @@
-from sklearn.learning_curve import learning_curve, validation_curve
+from sklearn.learning_curve import learning_curve
 import matplotlib.pyplot as plt
 import numpy as np
 import collections
+
+
+def _plot_lc(train_sizes, train_scores, test_scores, train_axis, scoring,
+             per_examples, est_title=None):
+    """
+    Plot the learning curve. Helper function.
+
+    Parameters
+    ----------
+    train_sizes
+    train_scores
+    test_scores
+    train_axis
+
+    Returns
+    -------
+    plt object
+    """
+    # account for percentage train size
+    # this is dirty but works
+    if train_axis == 'per_examples':
+        train_sizes = per_examples
+    # convert regression scoring to positive to make easier to present
+    if scoring in ['mean_absolute_error', 'mean_squared_error',
+                   'median_absolute_error']:
+        train_scores, test_scores = train_scores * -1.0, test_scores * -1.0
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                     train_scores_mean + train_scores_std, alpha=0.1,
+                     color="r")
+    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
+    if est_title is None:
+        plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
+                 label="Training score")
+        plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
+                 label="Cross-validation score")
+    else:
+        plt.plot(train_sizes, train_scores_mean, 'o-',
+                 label=est_title + " Training score")
+        plt.plot(train_sizes, test_scores_mean, 'o-',
+                 label=est_title + " Cross-validation score")
+    return plt
 
 
 def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
@@ -99,53 +145,18 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
             train_sizes, train_scores, test_scores = learning_curve(
                 est, X, y, cv=cv, n_jobs=n_jobs, scoring=scoring,
                 train_sizes=train_sizes)
-            # account for percentage train size
-            # this is dirty but works
-            if train_axis == 'per_examples':
-                train_sizes = per_examples
-            # convert regression scoring to positive to make easier to present
-            if scoring in ['mean_absolute_error', 'mean_squared_error',
-                           'median_absolute_error']:
-                train_scores, test_scores = train_scores * -1.0, test_scores * -1.0
-            train_scores_mean = np.mean(train_scores, axis=1)
-            train_scores_std = np.std(train_scores, axis=1)
-            test_scores_mean = np.mean(test_scores, axis=1)
-            test_scores_std = np.std(test_scores, axis=1)
-            plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
-                             train_scores_mean + train_scores_std, alpha=0.1)
-            plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
-                             test_scores_mean + test_scores_std, alpha=0.1)
-            plt.plot(train_sizes, train_scores_mean, 'o-',
-                     label=estimator_titles[ind] + " Training score")
-            plt.plot(train_sizes, test_scores_mean, 'o-',
-                     label=estimator_titles[ind] + " Cross-validation score")
+            _plot_lc(train_sizes, train_scores, test_scores, train_axis,
+                     scoring, per_examples, est_title=estimator_titles[ind])
+
 
     # if only 1 estimator
     else:
         train_sizes, train_scores, test_scores = learning_curve(
             estimator, X, y, cv=cv, n_jobs=n_jobs, scoring=scoring,
             train_sizes=train_sizes)
-        # account for percentage train size
-        # this is dirty but works
-        if train_axis == 'per_examples':
-            train_sizes = per_examples
-        # convert regression scoring to positive to make easier to present
-        if scoring in ['mean_absolute_error', 'mean_squared_error',
-                       'median_absolute_error']:
-            train_scores, test_scores = train_scores * -1.0, test_scores * -1.0
-        train_scores_mean = np.mean(train_scores, axis=1)
-        train_scores_std = np.std(train_scores, axis=1)
-        test_scores_mean = np.mean(test_scores, axis=1)
-        test_scores_std = np.std(test_scores, axis=1)
-        plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
-                         train_scores_mean + train_scores_std, alpha=0.1,
-                         color="r")
-        plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
-                         test_scores_mean + test_scores_std, alpha=0.1, color="g")
-        plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
-                 label="Training score")
-        plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
-                 label="Cross-validation score")
+        _plot_lc(train_sizes, train_scores, test_scores, train_axis, scoring,
+                 per_examples)
+
     # add grid and legend
     plt.grid()
     plt.legend(loc="best")
