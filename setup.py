@@ -9,16 +9,12 @@ except ImportError:
 if sys.version_info[0] >= 3:
     sys.exit('Sorry! Python 3+ not yet supported.')
 
-min_numpy_ver = '1.7.0'
-min_sklearn_ver = '0.16.0'
-min_matplotlib_ver = '1.5.0'
-
 def readme():
     with open('README.rst') as f:
         return f.read()
 
 setup(name='sk_modelcurves',
-      version='0.1',
+      version='0.2',
       description='A wrapper for easy creation of Learning and Validation Curves',
       long_description=readme(),
       classifiers=[
