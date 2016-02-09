@@ -2,10 +2,11 @@ from sklearn.learning_curve import learning_curve
 import matplotlib.pyplot as plt
 import numpy as np
 import collections
+from matplotlib.pyplot import cm
 
 
 def _plot_lc(train_sizes, train_scores, test_scores, train_axis, scoring,
-             per_examples, est_title=None):
+             per_examples, color=None, est_title=None, std_bands=True):
     """
     Plot the learning curve. Helper function.
 
@@ -15,6 +16,11 @@ def _plot_lc(train_sizes, train_scores, test_scores, train_axis, scoring,
     train_scores
     test_scores
     train_axis
+    scoring
+    per_examples
+    color
+    est_title
+    std_bands
 
     Returns
     -------
@@ -32,21 +38,31 @@ def _plot_lc(train_sizes, train_scores, test_scores, train_axis, scoring,
     train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
     test_scores_std = np.std(test_scores, axis=1)
-    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
-                     train_scores_mean + train_scores_std, alpha=0.1,
-                     color="r")
-    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
-                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
+    
     if est_title is None:
-        plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
+        plt.plot(train_sizes, train_scores_mean, 'o--', color="r",
                  label="Training score")
-        plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
+        plt.plot(train_sizes, test_scores_mean, 'x-', color="g",
                  label="Cross-validation score")
+        if std_bands:   
+            plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                             train_scores_mean + train_scores_std, alpha=0.1,
+                             color='r')
+            plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                             test_scores_mean + test_scores_std, alpha=0.1,
+                             color='g')
     else:
-        plt.plot(train_sizes, train_scores_mean, 'o-',
-                 label=est_title + " Training score")
-        plt.plot(train_sizes, test_scores_mean, 'o-',
-                 label=est_title + " Cross-validation score")
+        plt.plot(train_sizes, train_scores_mean, 'o--',
+                 label=est_title + " Training score", color=color)
+        plt.plot(train_sizes, test_scores_mean, 'x-',
+                 label=est_title + " Cross-validation score", color=color*0.99)
+        if std_bands:   
+            plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                             train_scores_mean + train_scores_std, alpha=0.1,
+                             color=color)
+            plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                             test_scores_mean + test_scores_std, alpha=0.1,
+                             color=color*0.99)
     return plt
 
 
@@ -127,26 +143,36 @@ def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
 
     if ylim is not None:
         plt.ylim(*ylim)
+        
+    per_examples = np.copy(train_sizes)
 
     if train_axis == 'n_examples':
         plt.xlabel('Number of training examples used')
-    elif train_axis == 'per_examples':
-        per_examples = np.copy(train_sizes)
+    elif train_axis == 'per_examples':     
         plt.xlabel('Percent of training examples used')
     if scoring is not None:
-        plt.ylabel(scoring)
+        plt.ylabel(scoring.capitalize())
+    # account for default scoring
+    else:
+        raise TypeError('scoring argument must be specified with a string\
+        indicating the name of the scoring function, such as accuracy')
+        
 
     # if multiple estimators passed
     if isinstance(estimator, (collections.Sequence, np.ndarray)):
         if not isinstance(estimator_titles, (collections.Sequence, np.ndarray)):
             raise TypeError('When giving an array of estimators,you must\
             specify names for each of the estimators with estimator_titles')
+        # get number estimators for color setting
+        N = len(estimator)
+        color = cm.rainbow(np.linspace(0,1,N))
         for ind, est in enumerate(estimator):
             train_sizes, train_scores, test_scores = learning_curve(
                 est, X, y, cv=cv, n_jobs=n_jobs, scoring=scoring,
                 train_sizes=train_sizes)
             _plot_lc(train_sizes, train_scores, test_scores, train_axis,
-                     scoring, per_examples, est_title=estimator_titles[ind])
+                     scoring, per_examples, color=color[ind], 
+                     est_title=estimator_titles[ind])
 
 
     # if only 1 estimator
