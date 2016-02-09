@@ -27,6 +27,15 @@ Hopefully, this module will save you a few minutes each time you need to plot
 a learning or validation curve so you can focus on other things.
 
 
+Install
+=======
+
+Python's pip is the recommended method of installation. From the terminal::
+
+   $ pip install sk_modelcurves
+
+
+
 Example Usage
 =============
 

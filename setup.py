@@ -15,7 +15,7 @@ def readme():
 
 setup(name='sk_modelcurves',
       version='0.2',
-      description='A wrapper for easy creation of Learning and Validation Curves',
+      description='A wrapper for easy plots of learning and validation curves',
       long_description=readme(),
       classifiers=[
         'Development Status :: 3 - Alpha',
