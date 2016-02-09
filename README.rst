@@ -33,7 +33,7 @@ Example Usage
 Generate a learning curve using accuracy as a metric and 5-fold cross validation.
 
 Assumes a sklearn estimator called knn, training data matrix called X and
-training labels called y.
+training labels called y::
 
    $ from sk_modelcurves.learning_curve import draw_learning_curve
    $ draw_learning_curve(knn, X, y, scoring='accuracy', cv=5)
@@ -43,7 +43,7 @@ Generate multiple learning curves for several estimators using F1 score as a
 metric, 5-fold cross validation, and names for each of the estimators.
 
 Assumes 3 sklearn estimators called knn2, knn20, knn40, training data matrix
-called X and training labels called y.
+called X and training labels called y::
 
    $ from sk_modelcurves.learning_curve import draw_learning_curve
    $ draw_learning_curve([knn2, knn20, knn40], X, y, scoring='f1', cv=5,
