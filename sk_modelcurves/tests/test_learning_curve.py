@@ -1,4 +1,5 @@
 # test cases to be added here for learning curves
+# TODO: add useful test cases
 import unittest
 from sk_modelcurves.learning_curve import draw_learning_curve
 from sklearn import datasets
