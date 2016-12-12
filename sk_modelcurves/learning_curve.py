@@ -1,11 +1,11 @@
-from sklearn.learning_curve import learning_curve
+from sklearn.model_selection import learning_curve
 import matplotlib.pyplot as plt
 import numpy as np
 import collections
 
 
 def draw_learning_curve(estimator, X, y, ylim=None, cv=None, scoring=None,
-                        train_sizes=np.linspace(.1, 1.0, 5),
+                        train_sizes=np.linspace(.2, 1.0, 5),
                         train_axis='n_examples', estimator_titles=None,
                         n_jobs=1):
     """
